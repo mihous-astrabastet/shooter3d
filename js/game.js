@@ -35,6 +35,11 @@ function shoot() {
       tgt.headMat.color.setHex(0xffffff);
       showHitMarker(isHead);
       playSound('hit', 0.5);
+
+      // Партикли при влучанні
+      const hitPos = new THREE.Vector3();
+      hit.object.getWorldPosition(hitPos);
+      spawnHitParticles(hitPos, tgt.originalColor);
       playSound('hit', 0.5);
 
       if (tgt.hp <= 0) {
