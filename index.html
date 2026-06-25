@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<title>3D Шутер</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="ui">
+  <div id="flash"></div>
+
+  <div id="screen">
+    <h1>3D Шутер</h1>
+    <p>Прототип від першої особи.<br>Знищуй мішені — вони стають швидшими з часом.</p>
+    <button id="start-btn">Почати гру</button>
+    <div id="controls-hint">
+      WASD — рух &nbsp;·&nbsp; Shift — біг<br>
+      Миша — прицілювання &nbsp;·&nbsp; ЛКМ — постріл &nbsp;·&nbsp; R — перезарядка
+    </div>
+  </div>
+
+  <div id="crosshair"><div id="crosshair-dot"></div></div>
+
+  <div id="hitmarker">
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="2"  y1="2"  x2="10" y2="10" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="22" y1="2"  x2="30" y2="10" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="2"  y1="30" x2="10" y2="22" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="22" y1="30" x2="30" y2="22" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <div id="hud-top">
+    <div class="hud-block">
+      <div class="hud-label">Очки</div>
+      <div class="hud-val" id="score-val">0</div>
+    </div>
+    <div class="hud-block" style="text-align:right;">
+      <div class="hud-label">Патрони</div>
+      <div id="ammo-dots"></div>
+      <div id="ammo-text" style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px;">7 / 21</div>
+    </div>
+  </div>
+
+  <div id="killfeed"></div>
+
+  <div id="reload-bar-wrap">
+    <span>Перезарядка</span>
+    <div id="reload-bar-bg"><div id="reload-bar-fill"></div></div>
+  </div>
+
+  <div id="aim-hint">Клікни на екран і веди мишею для прицілювання</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="js/scene.js"></script>
+<script src="js/targets.js"></script>
+<script src="js/player.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>
