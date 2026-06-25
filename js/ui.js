@@ -58,16 +58,44 @@ function muzzleFlash() {
   setTimeout(() => { fl.style.opacity = '0'; }, 50);
 }
 
+// Звуки
+const sounds = {};
+function loadSound(name, src) {
+  const audio = new Audio(src);
+  audio.preload = 'auto';
+  sounds[name] = audio;
+}
+loadSound('shoot',  'sounds/shoot.wav');
+loadSound('reload', 'sounds/reload.wav');
+loadSound('hit',    'sounds/hit.wav');
+
+document.addEventListener('click', () => {
+  Object.values(sounds).forEach(s => {
+    s.play().catch(() => {});
+    s.pause();
+    s.currentTime = 0;
+  });
+}, { once: true });
+
+function playSound(name, volume = 1.0) {
+  const s = sounds[name];
+  if (!s) return;
+  const a = new Audio(s.src);
+  a.volume = volume;
+  a.play().catch(() => {});
+}
+
 // Reload bar
-let reloading    = false;
-let reloadTimer  = 0;
+let reloading   = false;
+let reloadTimer = 0;
 const RELOAD_TIME = 1.8;
 
 function startReload() {
   if (reloading || reserve <= 0 || ammo === MAX_AMMO) return;
-  reloading    = true;
-  reloadTimer  = 0;
+  reloading   = true;
+  reloadTimer = 0;
   document.getElementById('reload-bar-wrap').style.display = 'flex';
+  playSound('reload', 0.7);
 }
 
 function tickReload(dt) {

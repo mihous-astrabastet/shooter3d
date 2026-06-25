@@ -13,6 +13,8 @@ function shoot() {
   updateAmmoUI();
   muzzleFlash();
   triggerRecoil();
+  playSound('shoot', 0.6);
+  playSound('shoot', 0.6);
 
   raycaster.setFromCamera(CENTER, camera);
 
@@ -32,6 +34,8 @@ function shoot() {
       tgt.bodyMat.color.setHex(0xffffff);
       tgt.headMat.color.setHex(0xffffff);
       showHitMarker(isHead);
+      playSound('hit', 0.5);
+      playSound('hit', 0.5);
 
       if (tgt.hp <= 0) {
         const pts = isHead ? 150 : 100;
@@ -71,7 +75,6 @@ function startGame() {
   setTimeout(() => {
     document.getElementById('aim-hint').style.display = 'none';
   }, 3000);
-  // Запитуємо pointer lock одразу
   requestLock();
 }
 
