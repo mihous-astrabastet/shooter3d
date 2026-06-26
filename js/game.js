@@ -43,9 +43,10 @@ function shoot() {
       playSound('hit', 0.5);
 
       if (tgt.hp <= 0) {
-        const pts = isHead ? 150 : 100;
+        const pts = isHead ? tgt.type.headPoints : tgt.type.points;
+        const label = tgt.type.label;
         updateScore(pts);
-        addKillFeed(isHead ? 'Хедшот! +150' : 'Влучання! +100');
+        addKillFeed(isHead ? `Хедшот [${label}]! +${pts}` : `+${pts} [${label}]`);
         killTarget(tgt);
       }
     }

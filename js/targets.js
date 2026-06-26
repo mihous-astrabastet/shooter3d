@@ -2,7 +2,58 @@
 
 const targets = [];
 const TARGET_COUNT = 8;
-const TARGET_COLORS = [0xcc3333, 0xcc6633, 0x3366cc, 0x33cc66];
+
+// Типи мішеней
+const TARGET_TYPES = {
+  normal: {
+    color: 0xcc3333,
+    hp: 3,
+    speed: 0.008,
+    scale: 1.0,
+    points: 100,
+    headPoints: 150,
+    label: 'звичайна'
+  },
+  fast: {
+    color: 0xddaa00,
+    hp: 1,
+    speed: 0.022,
+    scale: 0.7,
+    points: 200,
+    headPoints: 350,
+    label: 'швидка'
+  },
+  heavy: {
+    color: 0x4444cc,
+    hp: 8,
+    speed: 0.004,
+    scale: 1.5,
+    points: 300,
+    headPoints: 500,
+    label: 'броньована'
+  },
+  tiny: {
+    color: 0x22cc66,
+    hp: 1,
+    speed: 0.018,
+    scale: 0.45,
+    points: 400,
+    headPoints: 600,
+    label: 'мала'
+  }
+};
+
+// Шанси появи типів
+const TYPE_POOL = [
+  'normal','normal','normal','normal',
+  'fast','fast',
+  'heavy',
+  'tiny'
+];
+
+function randomType() {
+  return TYPE_POOL[Math.floor(Math.random() * TYPE_POOL.length)];
+}
 
 // Партикли
 const particles = [];
@@ -31,8 +82,8 @@ function spawnParticles(position, color, count = 12) {
   }
 }
 
-function spawnDeathParticles(position, color) {
-  spawnParticles(position, color, 24);
+function spawnDeathParticles(position, color, scale) {
+  spawnParticles(position, color, Math.floor(24 * scale));
 }
 
 function updateParticles(dt) {
@@ -57,32 +108,52 @@ function updateParticles(dt) {
 
 function spawnTarget() {
   const index = targets.length;
+  const typeName = randomType();
+  const type = TARGET_TYPES[typeName];
+
   const angle  = (index / TARGET_COUNT) * Math.PI * 2 + Math.random() * 0.6;
   const radius = 6 + Math.random() * 10;
+  const s = type.scale;
 
   const group = new THREE.Group();
   group.position.set(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+  group.scale.setScalar(s);
 
-  const color = TARGET_COLORS[index % TARGET_COLORS.length];
-  const mat   = new THREE.MeshLambertMaterial({ color: 0x333344 });
-
-  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.5, 8), mat);
+  const postMat = new THREE.MeshLambertMaterial({ color: 0x333344 });
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.5, 8), postMat);
   post.position.y = 0.75;
   group.add(post);
 
-  const bodyMat = new THREE.MeshLambertMaterial({ color });
+  const bodyMat = new THREE.MeshLambertMaterial({ color: type.color });
   const body    = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.0, 0.15), bodyMat);
   body.position.y = 1.6;
   group.add(body);
 
-  const headMat = new THREE.MeshLambertMaterial({ color });
+  const headMat = new THREE.MeshLambertMaterial({ color: type.color });
   const head    = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 12), headMat);
   head.position.y = 2.25;
   group.add(head);
 
+  // HP бар над головою (тільки для броньованих)
+  let hpBar = null;
+  if (typeName === 'heavy') {
+    const bgGeo = new THREE.PlaneGeometry(0.8, 0.1);
+    const bgMat = new THREE.MeshBasicMaterial({ color: 0x333333, side: THREE.DoubleSide });
+    const bg = new THREE.Mesh(bgGeo, bgMat);
+    bg.position.y = 2.75;
+    group.add(bg);
+
+    const fillGeo = new THREE.PlaneGeometry(0.78, 0.08);
+    const fillMat = new THREE.MeshBasicMaterial({ color: 0x44aaff, side: THREE.DoubleSide });
+    hpBar = new THREE.Mesh(fillGeo, fillMat);
+    hpBar.position.y = 2.75;
+    hpBar.position.z = 0.01;
+    group.add(hpBar);
+  }
+
   const ring = new THREE.Mesh(
     new THREE.RingGeometry(0.28, 0.32, 24),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide, transparent: true, opacity: 0.25 })
+    new THREE.MeshBasicMaterial({ color: type.color, side: THREE.DoubleSide, transparent: true, opacity: 0.4 })
   );
   ring.position.y = 2.25;
   ring.rotation.x = -Math.PI / 2;
@@ -91,11 +162,12 @@ function spawnTarget() {
   scene.add(group);
 
   targets.push({
-    group, body, head, ring,
+    group, body, head, ring, hpBar,
     bodyMat, headMat,
-    hp: 3, maxHp: 3,
-    originalColor: color,
-    speed: 0.008 + Math.random() * 0.006,
+    typeName, type,
+    hp: type.hp, maxHp: type.hp,
+    originalColor: type.color,
+    speed: type.speed + Math.random() * 0.003,
     angle, radius,
     bobOffset: Math.random() * Math.PI * 2,
     alive: true,
@@ -114,6 +186,14 @@ function updateTargets(dt) {
     t.group.rotation.y = -t.angle + Math.PI;
     t.ring.rotation.z += 0.02;
 
+    // Оновлюємо HP бар броньованої
+    if (t.hpBar) {
+      const pct = t.hp / t.maxHp;
+      t.hpBar.scale.x = pct;
+      t.hpBar.position.x = (pct - 1) * 0.39;
+      t.hpBar.material.color.setHex(pct > 0.5 ? 0x44aaff : 0xff6644);
+    }
+
     if (t.hitTimer > 0) {
       t.hitTimer -= dt;
       if (t.hitTimer <= 0) {
@@ -127,14 +207,13 @@ function updateTargets(dt) {
 }
 
 function killTarget(tgt) {
-  // Партикли смерті з позиції тіла і голови
   const bodyPos = new THREE.Vector3();
   tgt.body.getWorldPosition(bodyPos);
   const headPos = new THREE.Vector3();
   tgt.head.getWorldPosition(headPos);
 
-  spawnDeathParticles(bodyPos, tgt.originalColor);
-  spawnDeathParticles(headPos, tgt.originalColor);
+  spawnDeathParticles(bodyPos, tgt.originalColor, tgt.type.scale);
+  spawnDeathParticles(headPos, tgt.originalColor, tgt.type.scale);
 
   tgt.alive = false;
   scene.remove(tgt.group);
@@ -143,7 +222,6 @@ function killTarget(tgt) {
   setTimeout(spawnTarget, 1200);
 }
 
-// Публічна функція для виклику з game.js при влучанні
 function spawnHitParticles(worldPosition, color) {
   spawnParticles(worldPosition, color, 10);
 }
