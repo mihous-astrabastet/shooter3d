@@ -9,6 +9,7 @@
 
 <div id="ui">
   <div id="flash"></div>
+  <div id="blood"></div>
 
   <div id="screen">
     <h1>3D Шутер</h1>
@@ -36,11 +37,22 @@
       <div class="hud-label">Очки</div>
       <div class="hud-val" id="score-val">0</div>
     </div>
+    <div class="hud-block" id="timer-block">
+      <div class="hud-label">Час</div>
+      <div class="hud-val" id="timer-val">5:00</div>
+    </div>
     <div class="hud-block" style="text-align:right;">
       <div class="hud-label">Патрони</div>
       <div id="ammo-dots"></div>
       <div id="ammo-text" style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px;">7 / 21</div>
     </div>
+  </div>
+
+  <div id="hp-bar-wrap">
+    <div id="hp-bar-bg">
+      <div id="hp-fill"></div>
+    </div>
+    <span id="hp-text">100</span>
   </div>
 
   <div id="killfeed"></div>

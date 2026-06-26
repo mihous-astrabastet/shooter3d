@@ -4,7 +4,6 @@ window.gameRunning = false;
 const raycaster = new THREE.Raycaster();
 const CENTER    = new THREE.Vector2(0, 0);
 
-// Стрільба
 function shoot() {
   if (!window.gameRunning || reloading) return;
   if (ammo <= 0) { startReload(); return; }
@@ -13,7 +12,6 @@ function shoot() {
   updateAmmoUI();
   muzzleFlash();
   triggerRecoil();
-  playSound('shoot', 0.6);
   playSound('shoot', 0.6);
 
   raycaster.setFromCamera(CENTER, camera);
@@ -36,17 +34,14 @@ function shoot() {
       showHitMarker(isHead);
       playSound('hit', 0.5);
 
-      // Партикли при влучанні
       const hitPos = new THREE.Vector3();
       hit.object.getWorldPosition(hitPos);
       spawnHitParticles(hitPos, tgt.originalColor);
-      playSound('hit', 0.5);
 
       if (tgt.hp <= 0) {
         const pts = isHead ? tgt.type.headPoints : tgt.type.points;
-        const label = tgt.type.label;
         updateScore(pts);
-        addKillFeed(isHead ? `Хедшот [${label}]! +${pts}` : `+${pts} [${label}]`);
+        addKillFeed(isHead ? `Хедшот [${tgt.type.label}]! +${pts}` : `+${pts} [${tgt.type.label}]`);
         killTarget(tgt);
       }
     }
@@ -55,48 +50,52 @@ function shoot() {
   if (ammo === 0 && reserve > 0) setTimeout(startReload, 200);
 }
 
-// Клік — постріл якщо гра йде
 document.addEventListener('mousedown', e => {
   if (!window.gameRunning || e.button !== 0) return;
   shoot();
 });
 
-// R — перезарядка
 document.addEventListener('keydown', e => {
   if (e.code === 'KeyR' && window.gameRunning && !reloading) startReload();
 });
 
-// Старт гри
 function startGame() {
   window.gameRunning = true;
   score = 0;
   ammo = MAX_AMMO;
   reserve = 21;
   reloading = false;
+  playerHp = MAX_HP;
   updateAmmoUI();
+  updateHpUI();
   document.getElementById('score-val').textContent = '0';
   document.getElementById('screen').style.display = 'none';
   document.getElementById('aim-hint').textContent = 'Клікни на екран щоб захопити мишу';
   document.getElementById('aim-hint').style.display = 'block';
-  setTimeout(() => {
-    document.getElementById('aim-hint').style.display = 'none';
-  }, 3000);
+  setTimeout(() => { document.getElementById('aim-hint').style.display = 'none'; }, 3000);
+  startTimer();
   requestLock();
 }
 
 document.getElementById('start-btn').addEventListener('click', startGame);
 
-// Пауза по Escape
 document.addEventListener('keydown', e => {
   if (e.code === 'Escape' && window.gameRunning) {
     window.gameRunning = false;
+    stopTimer();
     document.getElementById('screen').style.display = 'flex';
     document.querySelector('#screen h1').textContent = 'Пауза';
+    document.querySelector('#screen p').textContent = '';
     document.getElementById('start-btn').textContent = 'Продовжити';
+  } else if (e.code === 'Escape' && !window.gameRunning &&
+             document.getElementById('start-btn').textContent === 'Продовжити') {
+    window.gameRunning = true;
+    startTimer();
+    document.getElementById('screen').style.display = 'none';
+    requestLock();
   }
 });
 
-// Головний цикл
 const clock = new THREE.Clock();
 
 function animate() {

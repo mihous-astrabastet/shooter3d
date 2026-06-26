@@ -1,29 +1,32 @@
-// targets.js — spawn, update, kill targets, particles, death animation
+// targets.js — spawn, update, kill targets, particles, death animation, damage
 
 const targets = [];
 const TARGET_COUNT = 8;
 
-// Типи мішеней
 const TARGET_TYPES = {
   normal: {
     color: 0xcc3333,
     hp: 3, speed: 0.008, scale: 1.0,
-    points: 100, headPoints: 150, label: 'звичайна'
+    points: 100, headPoints: 150, label: 'звичайна',
+    damage: 8, attackRange: 8, attackCooldown: 2.0
   },
   fast: {
     color: 0xddaa00,
     hp: 1, speed: 0.022, scale: 0.7,
-    points: 200, headPoints: 350, label: 'швидка'
+    points: 200, headPoints: 350, label: 'швидка',
+    damage: 5, attackRange: 7, attackCooldown: 1.2
   },
   heavy: {
     color: 0x4444cc,
     hp: 8, speed: 0.004, scale: 1.5,
-    points: 300, headPoints: 500, label: 'броньована'
+    points: 300, headPoints: 500, label: 'броньована',
+    damage: 20, attackRange: 10, attackCooldown: 3.0
   },
   tiny: {
     color: 0x22cc66,
     hp: 1, speed: 0.018, scale: 0.45,
-    points: 400, headPoints: 600, label: 'мала'
+    points: 400, headPoints: 600, label: 'мала',
+    damage: 3, attackRange: 6, attackCooldown: 0.8
   }
 };
 
@@ -38,10 +41,7 @@ function randomType() {
   return TYPE_POOL[Math.floor(Math.random() * TYPE_POOL.length)];
 }
 
-// Dying targets — анімація смерті
 const dyingTargets = [];
-
-// Партикли
 const particles = [];
 
 function spawnParticles(position, color, count = 12) {
@@ -96,14 +96,9 @@ function updateDyingTargets(dt) {
     const d = dyingTargets[i];
     d.timer += dt;
     const progress = d.timer / d.duration;
-
-    // Падає набік (обертання по Z)
     d.group.rotation.z = d.fallDir * (Math.PI / 2) * Math.min(progress * 1.5, 1.0);
-
-    // Зсувається вниз в міру падіння
     d.group.position.y = d.startY - progress * 0.8 * d.scale;
 
-    // Зникає в кінці
     if (progress > 0.6) {
       const fade = 1.0 - (progress - 0.6) / 0.4;
       d.group.traverse(obj => {
@@ -186,12 +181,15 @@ function spawnTarget() {
     angle, radius,
     bobOffset: Math.random() * Math.PI * 2,
     alive: true,
-    hitTimer: 0
+    hitTimer: 0,
+    attackTimer: Math.random() * 2.0
   });
 }
 
 function updateTargets(dt) {
   const time = Date.now() * 0.001;
+  const playerPos = camera.position;
+
   targets.forEach(t => {
     if (!t.alive) return;
     t.angle += t.speed;
@@ -200,6 +198,27 @@ function updateTargets(dt) {
     t.group.position.y = Math.sin(time * 1.2 + t.bobOffset) * 0.15;
     t.group.rotation.y = -t.angle + Math.PI;
     t.ring.rotation.z += 0.02;
+
+    // Атака гравця якщо близько
+    const dx = t.group.position.x - playerPos.x;
+    const dz = t.group.position.z - playerPos.z;
+    const dist = Math.sqrt(dx * dx + dz * dz);
+
+    if (dist < t.type.attackRange) {
+      t.attackTimer -= dt;
+      // Підсвічуємо мішень червоним коли атакує
+      t.ring.material.opacity = 0.8;
+      if (t.attackTimer <= 0) {
+        takeDamage(t.type.damage);
+        t.attackTimer = t.type.attackCooldown;
+        addKillFeed(`Атака [${t.type.label}]! -${t.type.damage} HP`);
+      }
+    } else {
+      t.ring.material.opacity = 0.4;
+      if (t.attackTimer < t.type.attackCooldown) {
+        t.attackTimer = Math.min(t.attackTimer + dt, t.type.attackCooldown);
+      }
+    }
 
     if (t.hpBar) {
       const pct = t.hp / t.maxHp;
@@ -222,7 +241,6 @@ function updateTargets(dt) {
 }
 
 function killTarget(tgt) {
-  // Партикли
   const bodyPos = new THREE.Vector3();
   tgt.body.getWorldPosition(bodyPos);
   const headPos = new THREE.Vector3();
@@ -230,12 +248,10 @@ function killTarget(tgt) {
   spawnDeathParticles(bodyPos, tgt.originalColor, tgt.type.scale);
   spawnDeathParticles(headPos, tgt.originalColor, tgt.type.scale);
 
-  // Прибираємо з живих
   tgt.alive = false;
   const idx = targets.indexOf(tgt);
   targets.splice(idx, 1);
 
-  // Запускаємо анімацію падіння
   dyingTargets.push({
     group: tgt.group,
     timer: 0,

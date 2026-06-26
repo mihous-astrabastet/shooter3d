@@ -99,3 +99,36 @@ canvas { display: block; }
   color: rgba(255,255,255,0.25); font-size: 11px; letter-spacing: 0.05em;
   display: none;
 }
+
+/* HP bar */
+#hp-bar-wrap {
+  position: absolute;
+  bottom: 28px; left: 28px;
+  display: flex; align-items: center; gap: 10px;
+}
+#hp-bar-bg {
+  width: 160px; height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px; overflow: hidden;
+}
+#hp-fill {
+  height: 100%; width: 100%;
+  background: #44cc66;
+  border-radius: 4px;
+  transition: width 0.2s, background 0.3s;
+}
+#hp-text {
+  font-size: 13px; color: rgba(255,255,255,0.7);
+  font-family: monospace; min-width: 28px;
+}
+
+/* Blood vignette */
+#blood {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(180,0,0,0.6) 100%);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+/* Timer */
+#timer-block { text-align: center; }
