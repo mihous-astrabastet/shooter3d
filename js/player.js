@@ -1,32 +1,31 @@
 // player.js — рух, прицілювання, зброя
 
-// Gun model
+// Gun — геометрична модель
 const gunGroup = new THREE.Group();
+gunGroup.position.set(0.22, -0.18, -0.38);
+camera.add(gunGroup);
+
 const gunMat    = new THREE.MeshLambertMaterial({ color: 0x222228 });
 const accentMat = new THREE.MeshLambertMaterial({ color: 0x444455 });
 
-const barrel = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.45), accentMat);
+const barrel  = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.45), accentMat);
 barrel.position.set(0, 0, -0.2);
 const gunBody = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.14, 0.3), gunMat);
-const grip = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.18, 0.1), gunMat);
+const grip    = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.18, 0.1), gunMat);
 grip.position.set(0, -0.14, 0.08);
 grip.rotation.x = 0.2;
 
 gunGroup.add(barrel, gunBody, grip);
-gunGroup.position.set(0.22, -0.18, -0.38);
-camera.add(gunGroup);
 
 // Input
 const keys = {};
 document.addEventListener('keydown', e => { keys[e.code] = true; });
 document.addEventListener('keyup',   e => { keys[e.code] = false; });
 
-// Mouse look через movementX/Y — працює повний 360°
+// Mouse look
 let yaw = 0, pitch = 0;
-let mouseMoved = false;
 const SENS = 0.0022;
 
-// Pointer lock — запитуємо при старті гри
 function requestLock() {
   renderer.domElement.requestPointerLock();
 }
@@ -34,13 +33,11 @@ function requestLock() {
 document.addEventListener('pointerlockchange', () => {
   const locked = document.pointerLockElement === renderer.domElement;
   if (!locked && window.gameRunning) {
-    // Втратили лок під час гри — показуємо підказку
     document.getElementById('aim-hint').textContent = 'Клікни на екран щоб продовжити';
     document.getElementById('aim-hint').style.display = 'block';
   }
 });
 
-// Клік на канвас — повертаємо лок якщо гра йде
 renderer.domElement.addEventListener('click', () => {
   if (window.gameRunning && document.pointerLockElement !== renderer.domElement) {
     requestLock();
@@ -49,7 +46,6 @@ renderer.domElement.addEventListener('click', () => {
 
 document.addEventListener('mousemove', e => {
   if (!window.gameRunning) return;
-  // movementX/Y — відносний рух, не залежить від краю екрану
   const dx = e.movementX || 0;
   const dy = e.movementY || 0;
   yaw   -= dx * SENS;

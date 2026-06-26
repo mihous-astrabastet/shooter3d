@@ -29,27 +29,45 @@ dirLight.castShadow = true;
 scene.add(dirLight);
 
 [
-  { pos: [0, 3, 0],    color: 0x2244aa },
-  { pos: [15, 3, 15],  color: 0xaa2244 },
-  { pos: [-15, 3, -15],color: 0x22aa44 },
+  { pos: [0, 3, 0],     color: 0x2244aa },
+  { pos: [15, 3, 15],   color: 0xaa2244 },
+  { pos: [-15, 3, -15], color: 0x22aa44 },
 ].forEach(({ pos, color }) => {
   const l = new THREE.PointLight(color, 1.0, 20);
   l.position.set(...pos);
   scene.add(l);
 });
 
-// Floor
+// Текстури підлоги
+const texLoader = new THREE.TextureLoader();
+
+function loadTex(path, repeat = 16) {
+  const t = texLoader.load(path);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(repeat, repeat);
+  return t;
+}
+
+const floorColorTex  = loadTex('textures/floor_color.jpg');
+const floorNormalTex = loadTex('textures/floor_normal.jpg');
+const floorRoughTex  = loadTex('textures/floor_rough.jpg');
+
+const floorMat = new THREE.MeshStandardMaterial({
+  map:          floorColorTex,
+  normalMap:    floorNormalTex,
+  roughnessMap: floorRoughTex,
+  roughness:    1.0,
+  metalness:    0.0,
+});
+
 const floor = new THREE.Mesh(
-  new THREE.PlaneGeometry(80, 80, 20, 20),
-  new THREE.MeshLambertMaterial({ color: 0x11121a })
+  new THREE.PlaneGeometry(80, 80, 1, 1),
+  floorMat
 );
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
 scene.add(floor);
-
-const grid = new THREE.GridHelper(80, 40, 0x1a1a2e, 0x1a1a2e);
-grid.position.y = 0.01;
-scene.add(grid);
 
 // Arena posts
 function makePost(x, z) {
@@ -77,7 +95,7 @@ for (let i = -4; i <= 4; i++) {
   const h = 0.8 + Math.random() * 0.8;
   const m = new THREE.Mesh(
     new THREE.BoxGeometry(1.5, h * 2, 1.5),
-    new THREE.MeshLambertMaterial({ color: 0x1e2030 })
+    new THREE.MeshStandardMaterial({ color: 0x1e2030, roughness: 0.8, metalness: 0.2 })
   );
   m.position.set(x, h, z);
   m.castShadow = true;
